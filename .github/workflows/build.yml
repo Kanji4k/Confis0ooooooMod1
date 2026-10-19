@@ -1,0 +1,35 @@
+name: Build mod jar
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 9.3.1
+
+      - name: Use the newest Fabric API for Minecraft 1.21.11
+        run: |
+          V=$(curl -s https://maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/maven-metadata.xml | grep -o '<version>[^<]*+1\.21\.11</version>' | sed 's/<[^>]*>//g' | tail -1)
+          echo "Using Fabric API: $V"
+          if [ -n "$V" ]; then printf '\nfabric_version=%s\n' "$V" >> gradle.properties; fi
+
+      - name: Build
+        run: gradle build --no-daemon --stacktrace
+
+      - name: Upload the finished jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: confis0oooooo-client-jar
+          path: build/libs/*.jar
